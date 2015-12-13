@@ -1,6 +1,7 @@
-var db = require('db/db.js');
+var db = require('expenses/db/db.js');
 
-exports.get = function (req, res) {
+// List all categories
+exports.list = function (req, res) {
     db(function(err, client, done){
         client.query('SELECT * FROM categories',
             function(err, result) {
@@ -11,6 +12,7 @@ exports.get = function (req, res) {
     });
 };
 
+// Create a new category and return the inserted row
 exports.post = function (req, res) {
     if(!req.body.name) {
         res.status(400).send('Missing `name` parameter!');
@@ -19,15 +21,21 @@ exports.post = function (req, res) {
 
     db(function(err, client, done){
         client.query('INSERT INTO categories(name) values($1::text)', [req.body.name],
+            function() {
+                done();
+            }
+        );
+
+        client.query("SELECT * FROM categories WHERE id=currval('categories_id_seq')",
             function(err, result) {
                 done();
-                res.json(result.rows);
+                res.json(result.rows[0]);
             }
         );
     });
 };
 
-// Create a new category
+// Edit a category name
 exports.put = function (req, res) {
     if(!req.body.name) {
         res.status(400).send('Missing `name` parameter!');
